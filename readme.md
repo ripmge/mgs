@@ -1,18 +1,22 @@
 # GOADURR 🏰🐳
 > **Game of Active Directory in dockurr/windows.**
 
+Updates: 
+- added Netexec Lab Barbhack 2025 
+- added DRACARYS GOAD Challenge Lab
+
 ## What is it?
 
 Do you want to play around with **Micro$oft Active Directory** but get annoyed by setting up lab ranges?  
 Do you dislike running a mini server 24/7 just for the **5 minutes per week that you'll actually use it**?
 **Then this might be for you.**  
 
-GOADURR sets up GOAD (Game of Active Directory) through `docker compose`. It spawns QEMU/KVM containers that run the actual Windows VMs, handling all networking glue and machine provisioning so you don't have to dedicate extra hardware towards your lab.
+GOADURR sets up GOAD (Game of Active Directory - and some other AD ranges) through `docker compose`. It spawns QEMU/KVM containers that run the actual Windows VMs, handling all networking glue and machine provisioning so you don't have to dedicate extra hardware towards your lab.
 
 ## Target audience
 * **People of culture:** Set up GOAD on your main device, which is Linux anyway... right? 
 WSL probably works too.
-* **Casual labbers:** Spin up your lab when you need it, and keep it powered down at all other times. Like a sane person would do it.
+* **Casual labbers:** Spin up your lab when you need it, and keep it powered down at all other times. Like a sane person.
 * **Container bonanza fans:** Everything looks better inside a container.
 
 ---

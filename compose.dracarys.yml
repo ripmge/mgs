@@ -1,0 +1,122 @@
+### TODO
+# instead of using inventory, point to inventory files of GOAD
+# instead of hardcoding IPs in entrypoint script to check for up, use ansible on inventory to check for up
+# can we give ((ip_range)) as env var to provisioner, so that we can adjust ips from compose file? 
+
+x-goadvm-common: &goadvm-common
+  image: dockurr/windows:5.14
+  restart: unless-stopped
+  cap_add: ["NET_ADMIN"]
+  devices:
+    - /dev/kvm
+    - /dev/net/tun
+    - /dev/vhost-net
+  entrypoint: ["/entrypoint-bridge.sh"]
+  command: ["/run/entry.sh"]
+  stop_grace_period: 2m
+
+
+services:
+  dracarys-dc01:
+    <<: *goadvm-common
+    container_name: dracarys-dc01
+    hostname: DC01  # rng MAC is created, based on hostname
+    environment:
+      VERSION: "2025"
+      RAM_SIZE: "4G"
+      CPU_CORES: "2"
+      DISK_SIZE: "40G"
+    ports:
+      - "127.0.0.1:8006:8006"
+    volumes:
+      - dracarys_dc01_data:/storage
+      - ./dracarys/bootstrap/install_dc01.bat:/oem/install.bat
+      - ./bootstrap/entrypoint-bridge.sh:/entrypoint-bridge.sh:ro
+    networks:
+      dracarys_bridge:
+        ipv4_address: 192.168.10.110
+
+  dracarys-srv01:
+    <<: *goadvm-common
+    container_name: dracarys-srv01
+    hostname: SRV01  
+    environment:
+      VERSION: "2025"
+      RAM_SIZE: "4G"
+      CPU_CORES: "2"
+      DISK_SIZE: "40G"
+    volumes:
+      - dracarys_srv01_data:/storage
+      - ./dracarys/bootstrap/install_srv01.bat:/oem/install.bat
+      - ./bootstrap/entrypoint-bridge.sh:/entrypoint-bridge.sh:ro
+    networks:
+      dracarys_bridge:
+        ipv4_address: 192.168.10.111
+
+  dracarys-lin01:
+    <<: *goadvm-common
+    container_name: dracarys-lin01
+    hostname: LX01
+    environment:
+      VERSION: "2022"
+      RAM_SIZE: "4G"
+      CPU_CORES: "2"
+      DISK_SIZE: "40G"
+    volumes:
+      - dracarys_lin01_data:/storage
+      - ./dracarys/bootstrap/install_lin01.bat:/oem/install.bat
+      - ./bootstrap/entrypoint-bridge.sh:/entrypoint-bridge.sh:ro
+    networks:
+      dracarys_bridge:
+        ipv4_address: 192.168.10.112
+
+  dracarys-provisioner:
+    build: 
+      context: ./dracarys/provisioning
+      dockerfile: ./Dockerfile.dracarys
+    container_name: dracarys-provisioner
+    depends_on:
+      - dracarys-dc01
+      - dracarys-srv01
+      - dracarys-lin01
+    networks:
+      dracarys_bridge:
+        ipv4_address: 192.168.10.100
+    volumes:
+      - ./GOAD:/goad             # GOAD subrepo
+      - dracarys_ansible_data:/dracarys/data  # persistence for "run once" marker
+      - ./dracarys/inventory/inventory.ini:/inventory/inventory.ini 
+    environment:
+      ANSIBLE_HOST_KEY_CHECKING: "False"
+      ANSIBLE_ALLOW_BROKEN_CONDITIONALS: "1" 
+    restart: no
+
+  dracarys-kali:
+    image: kasmweb/kali-rolling-desktop:1.18.0
+    container_name: dracarys-kali
+    profiles:
+      - kali
+    restart: unless-stopped
+    shm_size: "512m"
+    cap_add: ["NET_ADMIN"]
+    environment:
+      VNC_PW: "password"
+    ports:
+      - "6901:6901"
+    networks:
+      dracarys_bridge:
+        ipv4_address: 192.168.10.50
+
+networks:
+  dracarys_bridge:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.10.0/24
+          gateway: 192.168.10.1
+
+volumes:
+  dracarys_dc01_data:
+  dracarys_lin01_data:
+  dracarys_srv01_data:
+  dracarys_ansible_data:
