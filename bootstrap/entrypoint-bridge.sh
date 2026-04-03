@@ -4,9 +4,25 @@ set -Eeuo pipefail
 # ---- settings you can override via env ----
 : "${TAP_IF:=tap0}"
 : "${BR_IF:=br0}"
-: "${CONT_IF:=eth0}"          # container NIC on docker bridge
-: "${ADAPTER:=virtio-net-pci}" # qemu device
-: "${MAC:=}"                   # optional: provide MAC yourself
+: "${CONT_IF:=eth0}"              # container NIC on docker bridge
+: "${ADAPTER:=virtio-net-pci}"    # qemu device
+: "${MAC:=}"                      # optional provide MAC
+: "${VM_IP:?VM_IP must be set}" 
+: "${VM_DNS:=8.8.8.8}" 
+
+GW_IP="$(printf '%s\n' "$VM_IP" | awk -F. '{print $1"."$2"."$3".1"}')"
+
+# Generate install.bat file
+mkdir -p /oem
+test -f /install.bat || { echo "/install.bat not mounted. Add it in compose"; exit 1; }
+
+cp /install.bat /oem/install.bat
+
+sed -i \
+  -e "s/__VM_IP__/${VM_IP}/g" \
+  -e "s/__GW_IP__/${GW_IP}/g" \
+  -e "s/__VM_DNS__/${VM_DNS}/g" \
+  /oem/install.bat
 
 # Generate a stable locally-administered MAC if none provided
 if [[ -z "${MAC}" ]]; then

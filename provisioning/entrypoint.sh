@@ -24,20 +24,21 @@ echo "[-] No marker found. Starting provisioning sequence."
 # ---------------------------------------------------------
 # We need to wait until the Windows Servers are actually listening on WinRM (5985).
 # Since they are installing from ISO, this could take 15-30 minutes on first boot.
-TARGETS=("192.168.56.10" "192.168.56.11" "192.168.56.12" "192.168.56.22" "192.168.56.23")
 
-echo "[*] Waiting for WinRM reachability on all nodes..."
-for IP in "${TARGETS[@]}"; do
-    echo "    Waiting for $IP:5985..."
-    # Loop until nc (netcat) successfully connects to port 5985
-    while ! nc -z -w 5 $IP 5985; do
-        echo "    - $IP not ready. Retrying in 30 seconds..."
-        sleep 30
-    done
-    echo "    + $IP is ONLINE."
+INV=/inventory/inventory.ini
+SLEEP=60
+
+echo "[*] Waiting for Ansible WinRM connectivity on all inventory hosts..."
+while true; do
+  if ansible -i "$INV" all \
+    -m ansible.builtin.win_ping \
+    >/dev/null; then
+    echo "[+] All hosts respond to win_ping (WinRM ready)."
+    break
+  fi
+  echo "[-] Not all hosts ready yet. Retrying in ${SLEEP}s..."
+  sleep "$SLEEP"
 done
-
-echo "[+] All Windows nodes are reachable."
 
 # ---------------------------------------------------------
 # Step 2: Prepare Inventory
@@ -49,8 +50,12 @@ echo "[+] All Windows nodes are reachable."
 # Step 3: Run Ansible Playbooks
 # ---------------------------------------------------------
 
-echo "[*] Running Pre-Flight DNS Checks..."
-ansible-playbook -i /inventory/inventory.ini /ansible/bootstrap_dns.yml
+#echo "[*] Running Pre-Flight DNS Checks..."
+echo "[*] Skipping Pre-Flight DNS Checks..."
+echo "[*] ..."
+echo "[*] Let's see if these are still needed" 
+sleep 3
+#ansible-playbook -i /inventory/inventory.ini /ansible/bootstrap_dns.yml
 
 
 echo "[*] Launching GOAD Ansible Playbooks..."

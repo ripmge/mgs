@@ -21,11 +21,12 @@ services:
       RAM_SIZE: "4G"
       CPU_CORES: "2"
       DISK_SIZE: "40G"
+      VM_IP: "192.168.56.10"
     ports:
       - "8006:8006"
     volumes:
       - dc01_data:/storage
-      - ./bootstrap/install_dc01.bat:/oem/install.bat
+      - ./bootstrap/install.bat:/install.bat:ro
       - ./bootstrap/entrypoint-bridge.sh:/entrypoint-bridge.sh:ro
     networks:
       goad_bridge:
@@ -40,9 +41,10 @@ services:
       RAM_SIZE: "4G"
       CPU_CORES: "2"
       DISK_SIZE: "40G"
+      VM_IP: "192.168.56.11"
     volumes:
       - dc02_data:/storage
-      - ./bootstrap/install_dc02.bat:/oem/install.bat
+      - ./bootstrap/install.bat:/install.bat:ro
       - ./bootstrap/entrypoint-bridge.sh:/entrypoint-bridge.sh:ro
     networks:
       goad_bridge:
@@ -57,9 +59,10 @@ services:
       RAM_SIZE: "4G"
       CPU_CORES: "2"
       DISK_SIZE: "40G"
+      VM_IP: "192.168.56.12"
     volumes:
       - dc03_data:/storage
-      - ./bootstrap/install_dc03.bat:/oem/install.bat
+      - ./bootstrap/install.bat:/install.bat:ro
       - ./bootstrap/entrypoint-bridge.sh:/entrypoint-bridge.sh:ro
     networks:
       goad_bridge:
@@ -74,9 +77,10 @@ services:
       RAM_SIZE: "4G"
       CPU_CORES: "2"
       DISK_SIZE: "40G"
+      VM_IP: "192.168.56.22"
     volumes:
       - srv01_data:/storage
-      - ./bootstrap/install_srv01.bat:/oem/install.bat
+      - ./bootstrap/install.bat:/install.bat:ro
       - ./bootstrap/entrypoint-bridge.sh:/entrypoint-bridge.sh:ro
     networks:
       goad_bridge:
@@ -91,9 +95,10 @@ services:
       RAM_SIZE: "4G"
       CPU_CORES: "2"
       DISK_SIZE: "40G"
+      VM_IP: "192.168.56.23"
     volumes:
       - srv02_data:/storage
-      - ./bootstrap/install_srv02.bat:/oem/install.bat
+      - ./bootstrap/install.bat:/install.bat:ro
       - ./bootstrap/entrypoint-bridge.sh:/entrypoint-bridge.sh:ro
     networks:
       goad_bridge:

@@ -1,3 +1,6 @@
+netsh interface ipv4 set address name="Ethernet" static __VM_IP__ 255.255.255.0 __GW_IP__
+netsh interface ipv4 set dns name="Ethernet" static __VM_DNS__
+
 :: Disable Windows Firewall
 NetSh Advfirewall set allprofiles state off
 
