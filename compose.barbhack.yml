@@ -97,7 +97,7 @@ services:
         ipv4_address: 192.168.10.100
     volumes:
       - ./netexec/Barbhack-2025:/barb             # GOAD subrepo
-      - barb_ansible_data:/barb/data  # persistence for "run once" marker
+      - barb_provisioner:/barb/data  # persistence for "run once" marker
       - ./barb/inventory/inventory.ini:/inventory/inventory.ini 
     environment:
       ANSIBLE_HOST_KEY_CHECKING: "False"
@@ -133,4 +133,4 @@ volumes:
   barb_srv03_data:
   barb_srv01_data:
   barb_srv02_data:
-  barb_ansible_data:
+  barb_provisioner:

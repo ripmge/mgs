@@ -119,7 +119,8 @@ services:
     volumes:
       - ./GOAD:/goad             # GOAD subrepo
       - ./inventory/inventory.ini:/inventory/inventory.ini 
-      - ansible_data:/goad/data  # persistence for "run once" marker
+      - goad_provisioner:/provisioner/data  # persistence for "run once" marker
+      - ./provisioning/entrypoint.sh:/entrypoint.sh
     environment:
       ANSIBLE_HOST_KEY_CHECKING: "False"
       ANSIBLE_ALLOW_BROKEN_CONDITIONALS: "1" 
@@ -155,4 +156,4 @@ volumes:
   dc03_data:
   srv01_data:
   srv02_data:
-  ansible_data:
+  goad_provisioner:

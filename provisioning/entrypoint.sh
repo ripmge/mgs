@@ -1,72 +1,109 @@
 #!/bin/bash
 # /ansible/entrypoint.sh
 
-# Path to the marker file. 
-# /goad/data must be a persistent volume shared with the host or named volume.
-MARKER_FILE="/goad/data/.goad_provisioned"
+# Path to the marker file
+# must be located at persistent or shared volume
+MARKER_FILE="/provisioner/data/.goad_provisioned"
 
-echo "[*] GOAD Ansible Provisioner Started"
 
-# Check if the marker exists
+BASE="${BASE:-/goad/ad/GOAD/data}"
+INVENTORY1="${INVENTORY1:-$BASE/inventory}"
+INVENTORY2="${INVENTORY2:-$BASE/inventory_disable_vagrant}"
+IP_RANGE="${IP_RANGE:-192.168.56}"
+PROV_WORKDIR=/goad/ansible
+
+# build inventory args
+INV_ARGS=()
+
+[[ -n "$INVENTORY1" ]] && INV_ARGS+=(-i "$INVENTORY1")
+[[ -n "$INVENTORY2" ]] && INV_ARGS+=(-i "$INVENTORY2")
+
+echo "[*] Ansible Provisioner Started"
+
+# check if marker exists
 if [ -f "$MARKER_FILE" ]; then
     echo "[+] Setup marker found at $MARKER_FILE."
     echo "[+] The lab is already provisioned."
-    echo "[*] Exiting."
-    # We sleep to allow the user to docker exec in if they want to run manual playbooks later
+    echo "[*] Exiting"
+    # sleep for debug
     #exec sleep infinity
     exit 0
 fi
 
 echo "[-] No marker found. Starting provisioning sequence."
 
-# ---------------------------------------------------------
-# Step 1: Wait for Windows Nodes
-# ---------------------------------------------------------
-# We need to wait until the Windows Servers are actually listening on WinRM (5985).
-# Since they are installing from ISO, this could take 15-30 minutes on first boot.
+echo "[+] # ---------------------------------------------------------"
+echo "[+] Step 1: Wait for Windows Nodes"
+echo "[+] # ---------------------------------------------------------"
 
-INV=/inventory/inventory.ini
+echo "[+] need to wait until the Windows Servers are actually listening on WinRM (5985)"
+echo "[+] since they are installing from ISO, this could take 10-20 minutes on first boot"
+
 SLEEP=60
 
+# wait for WINRM loop
 echo "[*] Waiting for Ansible WinRM connectivity on all inventory hosts..."
 while true; do
-  if ansible -i "$INV" all \
-    -m ansible.builtin.win_ping \
-    >/dev/null; then
+  OUTPUT="$(
+    ansible "${INV_ARGS[@]}" all \
+      -m ansible.builtin.win_ping \
+      -e "{  \
+          ip_range: '$IP_RANGE',  \
+          ansible_port: 5985,  \
+          ansible_winrm_scheme: 'http',  \
+          ansible_user: 'Docker',  \
+          ansible_password: 'admin'  \
+        }" 2>&1
+    )"
+  EXIT_CODE=$?
+  UP_COUNT="$(grep -c 'SUCCESS' <<< "$OUTPUT" || true)"
+  if [[ $EXIT_CODE -eq 0 ]]; then
     echo "[+] All hosts respond to win_ping (WinRM ready)."
     break
+  else
+    echo "[-] Hosts ready: ${UP_COUNT}"
+    echo "[-] Not all hosts ready yet. Retrying in ${SLEEP}s..."
+    sleep "$SLEEP"
   fi
-  echo "[-] Not all hosts ready yet. Retrying in ${SLEEP}s..."
-  sleep "$SLEEP"
 done
 
-# ---------------------------------------------------------
-# Step 2: Prepare Inventory
-# ---------------------------------------------------------
-# We assume the user has mounted the inventory file or we generate one.
-# For this solution, we assume a static inventory file mapped at /inventory.ini
+echo "[+] Launching Ansible Playbooks..."
+echo "[+] # ---------------------------------------------------------"
+echo "[+] Starting optional playbook for dnscmd fix (applies to GOAD)"
+echo "[+] # ---------------------------------------------------------"
+# GOAD ansible playbook command might miss something, or doesnt work in this KVM/qemu config
+# except if we make sure that dnscmd is installed with this.
+# this should not interfere with any other playbooks... 
+ansible-playbook "${INV_ARGS[@]}" /ansible/bootstrap_dns.yml \
+        -e "{  \
+          ip_range: '$IP_RANGE',  \
+          ansible_port: 5985,  \
+          ansible_winrm_scheme: 'http',  \
+          ansible_user: 'Docker',  \
+          ansible_password: 'admin',  \
+          domain_adapter: 'Ethernet', \
+          nat_adapter: 'Ethernet', \
+          two_adapters: 'false' \
+        }"
 
-# ---------------------------------------------------------
-# Step 3: Run Ansible Playbooks
-# ---------------------------------------------------------
+cd $PROV_WORKDIR
 
-#echo "[*] Running Pre-Flight DNS Checks..."
-echo "[*] Skipping Pre-Flight DNS Checks..."
-echo "[*] ..."
-echo "[*] Let's see if these are still needed" 
-sleep 3
-#ansible-playbook -i /inventory/inventory.ini /ansible/bootstrap_dns.yml
+echo "[+] # ---------------------------------------------------------"
+echo "[+] Starting primary playbook"
+echo "[+] # ---------------------------------------------------------"
 
-
-echo "[*] Launching GOAD Ansible Playbooks..."
-
-# We usually run the 'build.yml' playbook from the GOAD repo.
-# Adjust the path based on where the GOAD repo is mounted.
-cd /goad/ansible
-
-ansible-playbook -i /inventory/inventory.ini main.yml -e '{"two_adapters": false}'
-
-# Capture exit code
+ansible-playbook "${INV_ARGS[@]}" main.yml \
+        -e "{  \
+          ip_range: '$IP_RANGE',  \
+          ansible_port: 5985,  \
+          ansible_winrm_scheme: 'http',  \
+          ansible_winrm_transport: 'basic', \
+          ansible_user: 'Docker',  \
+          ansible_password: 'admin',  \
+          domain_adapter: 'Ethernet', \
+          nat_adapter: 'Ethernet', \
+          two_adapters: false \
+        }"
 EXIT_CODE=$?
 
 if [ "$EXIT_CODE" -eq 0 ]; then
@@ -80,6 +117,6 @@ else
     exit $EXIT_CODE
 fi
 
-# Keep container running for debugging or manual usage
+# keep container running for debugging
 #exec sleep infinity
 exit 0

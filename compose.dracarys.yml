@@ -84,7 +84,7 @@ services:
         ipv4_address: 192.168.10.100
     volumes:
       - ./GOAD:/goad             # GOAD subrepo
-      - dracarys_ansible_data:/dracarys/data  # persistence for "run once" marker
+      - dracarys_provisioner:/dracarys/data  # persistence for "run once" marker
       - ./dracarys/inventory/inventory.ini:/inventory/inventory.ini 
     environment:
       ANSIBLE_HOST_KEY_CHECKING: "False"
@@ -119,4 +119,4 @@ volumes:
   dracarys_dc01_data:
   dracarys_lin01_data:
   dracarys_srv01_data:
-  dracarys_ansible_data:
+  dracarys_provisioner:
