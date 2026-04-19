@@ -1,5 +1,8 @@
-# GOADURR ⛧ 🐐🕯️
+# MGS - Magic GOAD sumoning ⛧ 🐐🕯️
 > **Deploy security labs with docker.**  
+
+![](img/mgs.png)
+
 
 *We got provisioning at home.*
 
@@ -7,10 +10,10 @@
 - Setup Game of Active Directory ([link](https://github.com/Orange-Cyberdefense/GOAD)) with:
 ```bash
 # Clone the repo
-git clone --recurse-submodules https://github.com/ripmge/goadurr
-cd goadurr
+git clone --recurse-submodules https://github.com/ripmge/mgs
+cd mgs
 
-# Start GOADURR
+# Start MGS
 docker compose up 
 ```
 - deploy any of the **other available labs**:
@@ -99,7 +102,7 @@ The following image shows what we are doing inside each container:
 │   │  - /run/entry.sh (original entrypoint)                       │   │
 │   │  - QEMU/KVM VM launcher                                      │   │
 │   │                                                              │   │
-│   │ GOADURR runtime injections                                   │   │
+│   │ MGS runtime injections                                       │   │
 │   │  - /entrypoint-bridge.sh   <-- hot-patched entrypoint        │   │
 │   │  - /oem/install.bat        <-- per-VM bootstrap, sets IP     │   │
 │   │  - /storage                <-- persistent VM disk            │   │
@@ -218,9 +221,9 @@ It consists of the following systems + a provisioner and an optional kali box:
 | Role | Service | Hostname | Container IP | VM IP | 
 |------|---------|----------|----|----|
 | Domain Controller | `dc01` | `BLACKPEARL` | `192.168.10.110` | `192.168.10.10` |
-| Member server | `srv01` | `JOLLYROGER` | `192.168.10.111` | `192.168.56.11` |
-| Member server | `srv02` | `QUEENREV` | `192.168.10.112` | `192.168.56.12` |
-| Member server | `srv03` | `FLYINGDUTCHMAN` | `192.168.10.113` | `192.168.56.13` |
+| Member server | `srv01` | `JOLLYROGER` | `192.168.10.111` | `192.168.10.11` |
+| Member server | `srv02` | `QUEENREV` | `192.168.10.112` | `192.168.10.12` |
+| Member server | `srv03` | `FLYINGDUTCHMAN` | `192.168.10.113` | `192.168.10.13` |
 | Provisioner | `provisioner` | - | `192.168.10.100` | - |
 | web-vnc Kali | `kali` | - | `192.168.10.50` | - |
 
