@@ -13,7 +13,7 @@
 git clone --recurse-submodules https://github.com/ripmge/mgs
 cd mgs
 
-# Start MGS
+# Start deployment of GOAD
 docker compose up 
 ```
 - deploy any of the **other available labs**:
@@ -48,7 +48,7 @@ Deployment time depends on lab:
 
 ### Connect to lab
 > Note:  
-This project is based on `dockurr/windows` container images ([link](https://github.com/dockur/windows)), which in turn is based on `qemus/qemu` ([link](https://github.com/qemus/qemu)). These projects use docker containers to run virtual machines using QEMU. They come with a web-based VNC viewer to check in on VM status.   
+This project is based on `dockurr/windows` container images ([link](https://github.com/dockur/windows)), which are based on `qemus/qemu` ([link](https://github.com/qemus/qemu)). These projects use docker containers to run VMs using QEMU. They come with a web-based VNC viewer to check in on VM status.   
 The vnc-viewer is also available in MGS. You can access it under http://localhost:8006 to check in on the primary VM.
 
 
