@@ -21,11 +21,12 @@ services:
       RAM_SIZE: "4G"
       CPU_CORES: "2"
       DISK_SIZE: "40G"
+      VM_IP: "192.168.10.10"
     ports:
       - "127.0.0.1:8006:8006"
     volumes:
       - barb_dc01_data:/storage
-      - ./barb/bootstrap/install_dc01.bat:/oem/install.bat
+      - ./bootstrap/install.bat:/install.bat:ro
       - ./bootstrap/entrypoint-bridge.sh:/entrypoint-bridge.sh:ro
     networks:
       barb_bridge:
@@ -40,9 +41,10 @@ services:
       RAM_SIZE: "4G"
       CPU_CORES: "2"
       DISK_SIZE: "40G"
+      VM_IP: "192.168.10.11"
     volumes:
       - barb_srv01_data:/storage
-      - ./barb/bootstrap/install_srv01.bat:/oem/install.bat
+      - ./bootstrap/install.bat:/install.bat:ro
       - ./bootstrap/entrypoint-bridge.sh:/entrypoint-bridge.sh:ro
     networks:
       barb_bridge:
@@ -57,9 +59,10 @@ services:
       RAM_SIZE: "4G"
       CPU_CORES: "2"
       DISK_SIZE: "40G"
+      VM_IP: "192.168.10.12"
     volumes:
       - barb_srv02_data:/storage
-      - ./barb/bootstrap/install_srv02.bat:/oem/install.bat
+      - ./bootstrap/install.bat:/install.bat:ro
       - ./bootstrap/entrypoint-bridge.sh:/entrypoint-bridge.sh:ro
     networks:
       barb_bridge:
@@ -74,9 +77,10 @@ services:
       RAM_SIZE: "4G"
       CPU_CORES: "2"
       DISK_SIZE: "40G"
+      VM_IP: "192.168.10.13"
     volumes:
       - barb_srv03_data:/storage
-      - ./barb/bootstrap/install_srv03.bat:/oem/install.bat
+      - ./bootstrap/install.bat:/install.bat:ro
       - ./bootstrap/entrypoint-bridge.sh:/entrypoint-bridge.sh:ro
     networks:
       barb_bridge:
