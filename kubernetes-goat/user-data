@@ -1,0 +1,38 @@
+#cloud-config
+users:
+  - default
+  - name: __CLOUDINIT_USER__
+    gecos: Cloud User
+    groups: [adm, sudo]
+    shell: /bin/bash
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    lock_passwd: false
+
+ssh_pwauth: true
+
+chpasswd:
+  expire: false
+  users:
+    - {name: __CLOUDINIT_USER__, password: __CLOUDINIT_PASS__, type: text}
+    - {name: ubuntu, password: password, type: text}
+
+write_files:
+  - path: /etc/motd.d/99-cloudinit-proof
+    permissions: '0644'
+    content: |
+      cloud-init proof: qemuk3s
+  - path: /usr/local/lib/kubernetes-goat/bootstrap.env
+    permissions: '0644'
+    owner: root:root
+    content: |
+__BOOTSTRAP_ENV__
+  - path: /usr/local/lib/kubernetes-goat/bootstrap-vm.sh
+    permissions: '0755'
+    owner: root:root
+    content: |
+__BOOTSTRAP_SCRIPT__
+
+runcmd:
+  - [ mkdir, -p, /usr/local/lib/kubernetes-goat ]
+  - [ bash, -lc, '/usr/local/lib/kubernetes-goat/bootstrap-vm.sh >>/var/log/kubernetes-goat-bootstrap.log 2>&1' ]
+  - [ sh, -c, 'echo "cloud-init proof: qemuk3s-05" >/dev/ttyS0' ]

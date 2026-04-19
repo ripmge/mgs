@@ -1,0 +1,9 @@
+# file is manually created in entrypoint.sh
+# THIS IS A PLACEHOLDER AND NOT USED
+
+# version: 2
+# ethernets:
+#   lan:
+#     match:
+#       name: "enp0s7"
+#     dhcp4: true

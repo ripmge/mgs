@@ -1,0 +1,82 @@
+services:
+  qemuk-k3sgoat:
+    image: qemux/qemu
+    container_name: qemu-k3sgoat
+    entrypoint: ["/usr/bin/tini", "-s", "/work/init/entrypoint.sh"]
+    environment:
+      BOOT_DISK_SIZE: "30G"
+      RAM_SIZE: "4G"
+      CPU_CORES: "2"
+      IMAGE_URL: "https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img"
+      VM_STATIC_IP: "192.168.77.40"
+      VM_GATEWAY: "192.168.77.1"
+      CLOUDINIT_USER: kubernetes
+      CLOUDINIT_PASS: goat
+      GOAT_REPO_URL: "https://github.com/madhuakula/kubernetes-goat.git"
+      GOAT_REPO_VERSION: "v2.3.0"
+      K3S_VERSION: "v1.35.0+k3s1"
+      HELM_VERSION: "v3.19.1"
+      DOCKER_INSTALL_SCRIPT_URL: "https://releases.rancher.com/install-docker/28.0.sh"
+    devices:
+      - /dev/kvm
+      - /dev/net/tun
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    ports:
+      - "8006:8006"
+      - "2222:22"
+    volumes:
+      - k3sgoat-storage:/storage
+      - ./kubernetes-goat:/work/init:ro
+    restart: always
+    stop_grace_period: 2m
+    networks:
+      k3sgoat_bridge:
+        ipv4_address: 192.168.77.140
+
+  qemu-k3sgoat-proxy:
+    image: alpine/socat
+    container_name: qemu-k3sgoat-proxy
+    depends_on:
+      - qemuk-k3sgoat
+    entrypoint:
+      - /bin/sh
+      - -ec
+    environment:
+      PROXY_TARGET_IP: "192.168.77.40"
+    command:
+      - >-
+        socat TCP-LISTEN:2122,fork,reuseaddr TCP:$${PROXY_TARGET_IP}:22 &
+        socat TCP-LISTEN:1230,fork,reuseaddr TCP:$${PROXY_TARGET_IP}:1230 &
+        socat TCP-LISTEN:1231,fork,reuseaddr TCP:$${PROXY_TARGET_IP}:1231 &
+        socat TCP-LISTEN:1232,fork,reuseaddr TCP:$${PROXY_TARGET_IP}:1232 &
+        socat TCP-LISTEN:1233,fork,reuseaddr TCP:$${PROXY_TARGET_IP}:1233 &
+        socat TCP-LISTEN:1234,fork,reuseaddr TCP:$${PROXY_TARGET_IP}:1234 &
+        socat TCP-LISTEN:1235,fork,reuseaddr TCP:$${PROXY_TARGET_IP}:1235 &
+        socat TCP-LISTEN:1236,fork,reuseaddr TCP:$${PROXY_TARGET_IP}:1236 &
+        wait
+    ports:
+      - "2122:2122"
+      - "1230:1230"
+      - "1231:1231"
+      - "1232:1232"
+      - "1233:1233"
+      - "1234:1234"
+      - "1235:1235"
+      - "1236:1236"
+    restart: always
+    networks:
+      k3sgoat_bridge:
+        ipv4_address: 192.168.77.141
+
+volumes:
+  k3sgoat-storage:
+
+networks:
+  k3sgoat_bridge:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.77.0/24
+          gateway: 192.168.77.1

@@ -23,7 +23,7 @@ services:
       DISK_SIZE: "40G"
       VM_IP: "192.168.56.10"
     ports:
-      - "8006:8006"
+      - "127.0.0.1:8006:8006"
     volumes:
       - dc01_data:/storage
       - ./bootstrap/install.bat:/install.bat:ro
@@ -126,7 +126,7 @@ services:
       ANSIBLE_ALLOW_BROKEN_CONDITIONALS: "1" 
     restart: no
 
-  kali:
+  goad-kali:
     image: kasmweb/kali-rolling-desktop:1.18.0
     container_name: goad-kali
     profiles:

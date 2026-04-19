@@ -10,7 +10,7 @@ BASE="${BASE:-/goad/ad/GOAD/data}"
 INVENTORY1="${INVENTORY1:-$BASE/inventory}"
 INVENTORY2="${INVENTORY2:-$BASE/inventory_disable_vagrant}"
 IP_RANGE="${IP_RANGE:-192.168.56}"
-PROV_WORKDIR=/goad/ansible
+PROV_WORKDIR="${PROV_WORKDIR:-/goad/ansible}"
 
 # build inventory args
 INV_ARGS=()
