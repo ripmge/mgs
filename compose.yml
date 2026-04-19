@@ -118,7 +118,7 @@ services:
         ipv4_address: 192.168.56.100
     volumes:
       - ./GOAD:/goad             # GOAD subrepo
-      - ./inventory/inventory.ini:/inventory/inventory.ini 
+      #- ./inventory/inventory.ini:/inventory/inventory.ini 
       - goad_provisioner:/provisioner/data  # persistence for "run once" marker
       - ./provisioning/entrypoint.sh:/entrypoint.sh
     environment:

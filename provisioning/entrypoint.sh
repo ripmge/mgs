@@ -67,24 +67,6 @@ while true; do
   fi
 done
 
-echo "[+] Launching Ansible Playbooks..."
-echo "[+] # ---------------------------------------------------------"
-echo "[+] Starting optional playbook for dnscmd fix (applies to GOAD)"
-echo "[+] # ---------------------------------------------------------"
-# GOAD ansible playbook command might miss something, or doesnt work in this KVM/qemu config
-# except if we make sure that dnscmd is installed with this.
-# this should not interfere with any other playbooks... 
-ansible-playbook "${INV_ARGS[@]}" /ansible/bootstrap_dns.yml \
-        -e "{  \
-          ip_range: '$IP_RANGE',  \
-          ansible_port: 5985,  \
-          ansible_winrm_scheme: 'http',  \
-          ansible_user: 'Docker',  \
-          ansible_password: 'admin',  \
-          domain_adapter: 'Ethernet', \
-          nat_adapter: 'Ethernet', \
-          two_adapters: 'false' \
-        }"
 
 cd $PROV_WORKDIR
 
