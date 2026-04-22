@@ -8,12 +8,10 @@
 
 *We got provisioning at home*
 
-MGS packages vulnerable security lab environments as Docker Compose stacks. Windows
-lab hosts run as QEMU/KVM guests inside containers, while provisioning containers
-bootstrap the upstream lab content.
+MGS packages Active Directory security labs as Docker Compose stacks, with Windows hosts running as QEMU/KVM guests inside containers.
 
-The main design goal is a reproducible lab that starts with `docker compose up`
-and does not require you to run anything else, like host-side Terraform, Ansible, shell scripts, or manual
+The primary goal is deploying a lab from start to finish with a simple `docker compose up`.
+Nothing else is required, especially no host-side Terraform, Ansible, shell scripts, or manual
 network setup.
 
 ## Quick Start
