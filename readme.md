@@ -10,8 +10,8 @@
 
 MGS packages Active Directory security labs as Docker Compose stacks, with Windows hosts running as QEMU/KVM guests inside containers.
 
-The primary goal is deploying a lab from start to finish with a simple `docker compose up`.
-Nothing else is required, especially no host-side Terraform, Ansible, shell scripts, or manual
+The primary goal is deploying labs from start to finish with a simple `docker compose up`.
+Nothing else is required, especially no host-side Terraform, Ansible, shell script to execute, or manual
 network setup.
 
 ## Quick Start
@@ -24,7 +24,7 @@ cd mgs
 docker compose up
 ```
 
-Other available lab stacks:
+Other available labs:
 
 ```bash
 # NetExec Barbhack 2025 lab
@@ -53,14 +53,14 @@ docker compose -f <compose-file> down
 
 Host requirements:
 
-- Docker Engine with Compose v2
+- Docker and Docker Compose
 - Linux host with KVM support
 - Access to `/dev/kvm` and `/dev/net/tun`
 - Enough CPU, memory, disk, and download capacity for the selected lab
 - Git submodules initialized, either through `--recurse-submodules` or
   `git submodule update --init --recursive`
 
-The Windows lab stacks mount `/dev/kvm`, `/dev/net/tun`, and `/dev/vhost-net`,
+The Windows labs mount `/dev/kvm`, `/dev/net/tun`, and `/dev/vhost-net`,
 and add `NET_ADMIN` inside the containers so QEMU can bridge each guest onto the
 lab subnet.
 
@@ -86,7 +86,7 @@ goad-provisioner  | [+] Marker file created. Future runs will be skipped.
 ```
 
 Provisioner containers use named volumes to store a run-once marker. Subsequent
-`docker compose up` runs reuse the VM disks and skip provisioning unless you
+`docker compose up` runs reuse the stored VM disks and skip provisioning unless you
 remove the relevant provisioner volume.
 
 To remove containers while preserving VM disks and provisioner state:
@@ -95,21 +95,20 @@ To remove containers while preserving VM disks and provisioner state:
 docker compose -f <compose-file> down
 ```
 
-To reset a lab from scratch, remove its named volumes as well:
+To reset a lab from scratch, remove its named volumes:
 
 ```bash
 docker compose -f <compose-file> down -v
 ```
 
-That deletes VM disks and provisioning state for the selected compose project.
+That deletes VM disks and provisioning state for the selected lab.
 
 ## Access
 
 MGS uses `dockurr/windows` and `qemux/qemu` containers to run VMs through
-QEMU. These images expose a browser VNC console that is useful for checking VM
-boot and provisioning status.
+QEMU. These images expose a browser VNC console that is useful for checking VM status.
 
-For the Windows-based labs, the primary VM exposes VNC on:
+In each lab, a primary VM exposes VNC on:
 
 ```text
 http://localhost:8006
@@ -120,7 +119,7 @@ There are two common access patterns.
 ### Access from the Docker Host
 
 With Docker Engine and the default bridge configuration, the lab subnet is
-reachable from the host. Use the VM IPs listed in the lab tables below.
+reachable from the host. **Use the VM IPs (and ignore container IPs)** listed in the lab tables below.
 
 Podman and non-default Docker network setups may behave differently.
 
@@ -129,15 +128,15 @@ Podman and non-default Docker network setups may behave differently.
 If you need to work from another machine on your LAN, either:
 
 - Start the optional Kali container and use its browser session.
-- Add an SSH jump container and use `ssh -D` as a SOCKS proxy into the lab.
+- Add an SSH jump container yourself and use `ssh -D` as a SOCKS proxy into the lab.
 
-Start Kali with the `kali` profile:
+The labs come with an optional Kali container. Start it with the `kali` profile:
 
 ```bash
 docker compose -f compose.barbhack.yml --profile kali up -d
 ```
 
-Kali is available at:
+Kali is then available via web-VNC:
 
 ```text
 https://localhost:6901
@@ -148,7 +147,7 @@ client.
 
 ### Default Credentials
 
-These credentials are for administrative or console access. Windows and Linux
+These credentials are for administrative or console access. Windows
 credentials are not part of the lab challenges.
 
 | System | Credentials |
@@ -160,17 +159,17 @@ credentials are not part of the lab challenges.
 ## Architecture
 
 Each Windows lab host is a Docker container running a QEMU/KVM VM. MGS injects
-bridge/tap networking and bootstrap logic at container runtime while keeping the
-upstream `dockurr/windows` image otherwise unchanged.
+bridge/tap networking and bootstrap logic through a custom entrypoint while keeping the
+original `dockurr/windows` image otherwise unchanged.
 
 Key behavior:
 
-- The container joins the Docker bridge network with a fixed container IP.
-- The Windows guest gets its own fixed VM IP on the same lab subnet.
-- `/entrypoint-bridge.sh` prepares bridge/tap networking inside the container.
-- `/oem/install.bat` or `/install.bat` provides per-VM bootstrap logic.
-- `/storage` is a named Docker volume containing the persistent VM disk.
-- The original upstream entrypoint is executed after MGS prepares networking.
+- Container gets a fixed IP on the Docker network.
+- Windows gets its own fixed VM IP on the same lab subnet.
+- `/entrypoint-bridge.sh` prepares networking inside the container (brigde/tap).
+- `install.bat` prepares each VM by enabling WinRM and setting static IP and firewall.
+- `/storage` is a named Docker volume where the VM files live.
+- The custom entrypoint hands over to the original entrypoint.
 
 ```text
 ┌──────────────────────────────────────────────────────────────────────┐
@@ -185,7 +184,7 @@ Key behavior:
 │   ┌──────────────────────────────────────────────────────────────┐   │
 │   │ dc01 container (dockurr/windows)                             │   │
 │   │--------------------------------------------------------------│   │
-│   │ Upstream runtime                                             │   │
+│   │ Original image runtime                                             │   │
 │   │  - /run/entry.sh                                             │   │
 │   │  - QEMU/KVM VM launcher                                      │   │
 │   │                                                              │   │
@@ -216,27 +215,27 @@ Key behavior:
 │   │                                                              │   │
 │   └──────────────────────────────────────────────────────────────┘   │
 │                                                                      │
-│ Other lab nodes and the provisioner live on the same Docker subnet.  │
+│ Other lab nodes and the provisioner are on the same Docker subnet.  │
 └──────────────────────────────────────────────────────────────────────┘
 ```
 
 ## Design Constraints
 
-MGS exists because the existing lab deployment paths were heavier than needed
-for local, repeatable practice environments for a single or a hand full of users.
+MGS exists because  other lab deployment options felt heavier and more cumbersome than needed
+for local, repeatable practice environments targeting a single user, or up to a hand full of users.
 
 1. **Self-contained deployment:** `docker compose up` should be enough. No
    Terraform, host-side Ansible, or additional orchestration should be required.
 2. **No host network preparation:** MGS should not require shell scripts or
-   persistent host network configuration. You should still review every compose
-   file before running it, especially bind mounts, devices, capabilities, and
+   persistent host network configuration. This doesn't mean you don't have to review things. You should still check out compose
+   files before running them, especially bind mounts, devices, capabilities, and
    published ports.
 3. **Daily-driver friendly:** The labs should be resumable with
    `docker compose up/down` so they can live on a primary workstation without
    dedicating separate hardware.
-4. **Reuse upstream images:** The stacks reuse upstream container images and
-   configure them through mounted bootstrap files and environment variables.
-   MGS maintains the glue, not custom Windows base images.
+4. **Reuse upstream images:** The stacks reuse existing container images and
+   configure them through custom entrypoints and environment variables.
+   I don't want to maintain a bunch of images.
 
 ## Entrypoint Hot Patch
 
@@ -274,10 +273,10 @@ Important implications:
 - `/dev/kvm` does not grant host filesystem access by itself. Host file access
   depends on bind mounts, named volumes, and exposed block devices.
 - VM code still runs as guest code mediated by the host kernel and KVM.
-- CPU, RAM, and disk IO exhaustion are realistic risks without Docker resource
+- CPU, RAM, and disk IO exhaustion are a potential threat without Docker resource
   limits.
 - Kernel escape bugs in KVM, vhost-net, tun/tap, or related networking paths are
-  the main isolation risk.
+  your main risk in regards to isolation.
 - Routing or bridging the lab network into a real LAN is the most practical
   operational footgun.
 
